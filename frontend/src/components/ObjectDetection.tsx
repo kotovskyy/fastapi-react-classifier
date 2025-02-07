@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, use } from 'react';
 import api from '../utils/api';
 
 interface DetectionResult {
@@ -12,6 +12,7 @@ const ObjectDetection: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [image, setImage] = useState<string | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const imageRef = useRef<HTMLImageElement | null>(null);
 
     const uploadImage = async (file: File) => {
         setLoading(true);
@@ -40,8 +41,8 @@ const ObjectDetection: React.FC = () => {
         }
     };
 
-    useEffect(() => {
-        if (image && results.length > 0 && canvasRef.current) {
+    const drawBoundingBoxes = () => {
+        if (image && results.length > 0 && canvasRef.current && imageRef.current) {
             const canvas = canvasRef.current;
             const ctx = canvas.getContext('2d');
             const img = new Image();
@@ -50,37 +51,55 @@ const ObjectDetection: React.FC = () => {
             img.onload = () => {
                 if (ctx) {
                     // Ensure canvas size matches the image size
-                    canvas.width = img.width;
-                    canvas.height = img.height;
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
 
                     // Draw the image on the canvas
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, 0, 0);
-
-                    // Scaling factors for bounding boxes
-                    const scaleX = canvas.width / img.width;
-                    const scaleY = canvas.height / img.height;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
                     // Draw bounding boxes
                     results.forEach((result) => {
                         const [x1, y1, x2, y2] = result.bbox;
-
-                        // Calculate scaled dimensions for bounding box
-                        const width = (x2 - x1) * img.width * scaleX;
-                        const height = (y2 - y1) * img.height * scaleY;
-                        const left = x1 * img.width * scaleX;
-                        const top = y1 * img.height * scaleY;
+                        const width = (x2 - x1) * img.naturalWidth;
+                        const height = (y2 - y1) * img.naturalHeight;
+                        const left = Math.max(x1 * img.naturalWidth, 0);
+                        const top = Math.max(y1 * img.naturalHeight, 0);
 
                         // Draw bounding box on the canvas
                         ctx.beginPath();
                         ctx.rect(left, top, width, height);
                         ctx.lineWidth = 2;
-                        ctx.strokeStyle = 'green';
+                        ctx.strokeStyle = '#00ff00';
                         ctx.stroke();
+
+                        const label = `${result.label} (${(result.confidence * 100).toFixed(2)}%)`;
+
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                        const textWidth = ctx.measureText(label).width;
+                        ctx.fillRect(left, top - 20, textWidth + 10, 20);
+
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = '14px Arial';
+                        ctx.fillText(label, left + 5, top - 5);
                     });
                 }
             };
         }
+    };
+
+    useEffect(() => {
+        if (image && results.length > 0){
+            drawBoundingBoxes();
+        }
+    }, [image, results]);
+
+    // Redraw bounding boxes when window resizes
+    useEffect(() => {
+        window.addEventListener('resize', drawBoundingBoxes);
+        return () => {
+            window.removeEventListener('resize', drawBoundingBoxes);
+        };
     }, [image, results]);
 
     return (
@@ -98,6 +117,7 @@ const ObjectDetection: React.FC = () => {
                 <div style={{ position: 'relative', marginTop: '20px' }}>
                     {/* Image element */}
                     <img 
+                        ref={imageRef}
                         src={image}
                         alt="Uploaded image"
                         style={{ width: '100%', height: 'auto' }}
@@ -106,21 +126,15 @@ const ObjectDetection: React.FC = () => {
                     {/* Canvas for drawing bounding boxes */}
                     <canvas
                         ref={canvasRef}
-                        style={{ position: 'absolute', top: 0, left: 0 }}
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: 'auto',
+                        }}
                     />
                 </div>
-            )}
-
-            {(results.length > 0) && !loading && (
-                <ul>
-                    {results.map((result, index) => (
-                        <li key={index}>
-                            <p>{result.label}</p>
-                            <p>Confidence: {result.confidence.toFixed(2)}</p>
-                            <p>Bounding box: {result.bbox.join(', ')}</p>
-                        </li>
-                    ))}
-                </ul>
             )}
         </div>
     );
