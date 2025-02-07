@@ -1,0 +1,17 @@
+# Ignore the .python-version file
+.python-version
+
+# Ignore all git-related files and directories
+.git
+.gitignore
+
+# Ignore Dockerfile if needed
+Dockerfile
+
+# Ignore other specific files/folders you don't want to include
+__pycache__
+*.pyc
+*.pyo
+
+# Ignore any other sensitive files like environment variables or local configurations
+.env
