@@ -105,6 +105,7 @@ const ObjectDetection: React.FC = () => {
     return (
         <div>
             <h1>Object Detection</h1>
+            <h3>Select an image</h3>
             <input 
             type="file" 
             accept="image/*" 
