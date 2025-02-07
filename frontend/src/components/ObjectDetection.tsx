@@ -58,6 +58,14 @@ const ObjectDetection: React.FC = () => {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
+                    // Scale based on device DPI
+                    const scaleFactor = window.devicePixelRatio || 1;
+                    const strokeWidth = 3 * scaleFactor; // Increase stroke width
+                    const fontSize = 16 * 1.5 * scaleFactor; // Increase font size
+
+                    const bgPadding = 5; // Padding around text
+                    const bgHeight = fontSize + bgPadding * 2; // Scale background height
+
                     // Draw bounding boxes
                     results.forEach((result) => {
                         const [x1, y1, x2, y2] = result.bbox;
@@ -66,21 +74,24 @@ const ObjectDetection: React.FC = () => {
                         const left = Math.max(x1 * img.naturalWidth, 0);
                         const top = Math.max(y1 * img.naturalHeight, 0);
 
-                        // Draw bounding box on the canvas
+                        // Draw bounding box
                         ctx.beginPath();
                         ctx.rect(left, top, width, height);
-                        ctx.lineWidth = 2;
+                        ctx.lineWidth = strokeWidth;
                         ctx.strokeStyle = '#00ff00';
                         ctx.stroke();
 
                         const label = `${result.label} (${(result.confidence * 100).toFixed(2)}%)`;
 
-                        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                        ctx.font = `${fontSize}px Arial`;
                         const textWidth = ctx.measureText(label).width;
-                        ctx.fillRect(left, top - 20, textWidth + 10, 20);
+
+                        // Draw label background (scales with font size)
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                        ctx.fillRect(left, top - bgHeight, textWidth + bgPadding * 2, bgHeight);
 
                         ctx.fillStyle = '#ffffff';
-                        ctx.font = '14px Arial';
+                        ctx.font = `${fontSize}px Arial`;
                         ctx.fillText(label, left + 5, top - 5);
                     });
                 }
