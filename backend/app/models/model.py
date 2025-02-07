@@ -24,7 +24,7 @@ def convert_bbox(bboxes: list[float, float, float, float], img_widht: int, img_h
     for box in bboxes:
             center_x = int(box[0] * img_widht)
             center_y = int(box[1] * img_height)
-            width = int(box[2] * img_height)
+            width = int(box[2] * img_widht)
             height = int(box[3] * img_height)
 
             min_x = int(center_x - width/2)
