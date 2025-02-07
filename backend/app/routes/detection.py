@@ -22,7 +22,7 @@ async def upload_image(file: UploadFile = File(...)):
     results = []
     for i in range(len(boxes)):
         results.append({
-            "class_id": LABELS[int(class_ids[i])],
+            "label": LABELS[int(class_ids[i])],
             "confidence": float(confidences[i]),
             "bbox": [float(coord) for coord in boxes[i]]
         })
